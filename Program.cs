@@ -16,7 +16,7 @@ namespace IrenNotifier
         private static readonly string EmailAddress = Environment.GetEnvironmentVariable("EMAIL_ADDRESS") ?? "";
         private static readonly string EmailAppPassword = Environment.GetEnvironmentVariable("EMAIL_APP_PASSWORD") ?? "";
 
-        private static readonly string IrenRssUrl = "https://ir.irisenergy.co/rss/news-releases.xml";
+        private static readonly string YahooRssUrl = "https://finance.yahoo.com/rss/headline?s=IREN";
         private static readonly string LastIdFile = Path.Combine(Directory.GetCurrentDirectory(), "last_id.txt");
 
         private static readonly string[] CriticalKeywords = { "offering", "8-k", "earnings", "guidance", "dilution" };
@@ -28,7 +28,7 @@ namespace IrenNotifier
             try
             {
                 using var client = new HttpClient();
-                var rssContent = await client.GetStringAsync(IrenRssUrl);
+                var rssContent = await client.GetStringAsync(YahooRssUrl);
                 var doc = XDocument.Parse(rssContent);
 
                 var latestItem = doc.Descendants("item").FirstOrDefault();
