@@ -1,0 +1,14 @@
+C:\Users\yonat\Projects\IrenStockBot\bin\Debug\net8.0\IrenStockBot.exe
+C:\Users\yonat\Projects\IrenStockBot\bin\Debug\net8.0\IrenStockBot.deps.json
+C:\Users\yonat\Projects\IrenStockBot\bin\Debug\net8.0\IrenStockBot.runtimeconfig.json
+C:\Users\yonat\Projects\IrenStockBot\bin\Debug\net8.0\IrenStockBot.dll
+C:\Users\yonat\Projects\IrenStockBot\bin\Debug\net8.0\IrenStockBot.pdb
+C:\Users\yonat\Projects\IrenStockBot\obj\Debug\net8.0\IrenStockBot.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\yonat\Projects\IrenStockBot\obj\Debug\net8.0\IrenStockBot.AssemblyInfoInputs.cache
+C:\Users\yonat\Projects\IrenStockBot\obj\Debug\net8.0\IrenStockBot.AssemblyInfo.cs
+C:\Users\yonat\Projects\IrenStockBot\obj\Debug\net8.0\IrenStockBot.csproj.CoreCompileInputs.cache
+C:\Users\yonat\Projects\IrenStockBot\obj\Debug\net8.0\IrenStockBot.dll
+C:\Users\yonat\Projects\IrenStockBot\obj\Debug\net8.0\refint\IrenStockBot.dll
+C:\Users\yonat\Projects\IrenStockBot\obj\Debug\net8.0\IrenStockBot.pdb
+C:\Users\yonat\Projects\IrenStockBot\obj\Debug\net8.0\IrenStockBot.genruntimeconfig.cache
+C:\Users\yonat\Projects\IrenStockBot\obj\Debug\net8.0\ref\IrenStockBot.dll
