@@ -17,7 +17,7 @@ namespace IrenNotifier
         private static readonly string EmailAppPassword = Environment.GetEnvironmentVariable("EMAIL_APP_PASSWORD") ?? "";
 
         private static readonly string IrenRssUrl = "https://ir.irisenergy.co/rss/news-releases.xml";
-        private static readonly string LastIdFile = Path.Combine(AppContext.BaseDirectory, "last_id.txt");
+        private static readonly string LastIdFile = Path.Combine(Directory.GetCurrentDirectory(), "last_id.txt");
 
         private static readonly string[] CriticalKeywords = { "offering", "8-k", "earnings", "guidance", "dilution" };
 
