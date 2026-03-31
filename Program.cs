@@ -92,7 +92,7 @@ namespace IrenNotifier
                 "If the news is extremely critical (e.g., dilution, earnings report, major contract), include a 🚨 emoji at the beginning.\n\n" +
                 $"Title: {title}\nDescription: {description}";
 
-            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GeminiApiKey}";
+            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GeminiApiKey}";
 
             var requestBody = new
             {
