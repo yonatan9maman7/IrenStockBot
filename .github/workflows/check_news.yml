@@ -3,8 +3,9 @@ name: Check IREN News
 on:
   schedule:
     # 10:00 UTC = 13:00 Israel Summer Time (IDT, UTC+3)
-    # In winter (IST, UTC+2) this will run at 12:00 Israel time
     - cron: "0 10 * * *"
+    # 19:30 UTC = 22:30 Israel Summer Time (IDT, UTC+3)
+    - cron: "30 19 * * *"
   workflow_dispatch:
 
 permissions:

@@ -92,44 +92,69 @@ namespace IrenNotifier
                 "If the news is extremely critical (e.g., dilution, earnings report, major contract), include a 🚨 emoji at the beginning.\n\n" +
                 $"Title: {title}\nDescription: {description}";
 
-            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GeminiApiKey}";
-
-            var requestBody = new
+            var attempts = new[]
             {
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new[]
-                        {
-                            new { text = prompt }
-                        }
-                    }
-                }
+                (model: "gemini-2.5-flash", delay: 0),
+                (model: "gemini-2.0-flash", delay: 0),
+                (model: "gemini-2.0-flash", delay: 5000),
             };
 
             using var client = new HttpClient();
-            var json = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync(url, content);
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
+            foreach (var (model, delay) in attempts)
             {
-                Console.WriteLine($"Gemini API error: {response.StatusCode} - {responseBody}");
-                return "ניתוח לא זמין כרגע.";
+                try
+                {
+                    if (delay > 0)
+                        await Task.Delay(delay);
+
+                    Console.WriteLine($"Trying model: {model}...");
+
+                    string url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GeminiApiKey}";
+
+                    var requestBody = new
+                    {
+                        contents = new[]
+                        {
+                            new
+                            {
+                                parts = new[]
+                                {
+                                    new { text = prompt }
+                                }
+                            }
+                        }
+                    };
+
+                    var json = JsonSerializer.Serialize(requestBody);
+                    var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync(url, content);
+                    var responseBody = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"Gemini API error ({model}): {(int)response.StatusCode} {response.StatusCode} - {responseBody}");
+                        continue;
+                    }
+
+                    using var doc = JsonDocument.Parse(responseBody);
+                    var text = doc.RootElement
+                        .GetProperty("candidates")[0]
+                        .GetProperty("content")
+                        .GetProperty("parts")[0]
+                        .GetProperty("text")
+                        .GetString();
+
+                    return text?.Trim() ?? "לא התקבלה תשובה מהמודל.";
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Exception with model {model}: {ex.Message}");
+                }
             }
 
-            using var doc = JsonDocument.Parse(responseBody);
-            var text = doc.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
-
-            return text?.Trim() ?? "לא התקבלה תשובה מהמודל.";
+            return "ניתוח לא זמין כרגע עקב עומס בשרתים.";
         }
 
         static async Task SendTelegramMessage(string message)
