@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Mail;
 using System.Net;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -15,11 +17,10 @@ namespace IrenNotifier
         private static readonly string TelegramChatId = Environment.GetEnvironmentVariable("TELEGRAM_CHAT_ID") ?? "";
         private static readonly string EmailAddress = Environment.GetEnvironmentVariable("EMAIL_ADDRESS") ?? "";
         private static readonly string EmailAppPassword = Environment.GetEnvironmentVariable("EMAIL_APP_PASSWORD") ?? "";
+        private static readonly string GeminiApiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? "";
 
         private static readonly string YahooRssUrl = "https://finance.yahoo.com/rss/headline?s=IREN";
         private static readonly string LastIdFile = Path.Combine(Directory.GetCurrentDirectory(), "last_id.txt");
-
-        private static readonly string[] CriticalKeywords = { "offering", "8-k", "earnings", "guidance", "dilution" };
 
         static async Task Main(string[] args)
         {
@@ -43,6 +44,7 @@ namespace IrenNotifier
                 string title = latestItem.Element("title")?.Value ?? "No Title";
                 string link = latestItem.Element("link")?.Value ?? "";
                 string pubDate = latestItem.Element("pubDate")?.Value ?? "";
+                string description = latestItem.Element("description")?.Value ?? "";
 
                 string lastLink = File.Exists(LastIdFile) ? File.ReadAllText(LastIdFile).Trim() : "";
 
@@ -52,18 +54,24 @@ namespace IrenNotifier
                     return;
                 }
 
-                bool isCritical = CriticalKeywords.Any(k => title.ToLower().Contains(k));
+                string analysis = await AnalyzeWithGemini(title, description);
+                Console.WriteLine($"Gemini analysis:\n{analysis}");
 
-                string message = $"{(isCritical ? "🚨 מדווח קריטי 🚨" : "📰 עדכון חדש")} מ-IREN!\n\n" +
+                string message = $"📰 IREN Update\n\n" +
                                  $"כותרת: {title}\n" +
-                                 $"תאריך: {pubDate}\n" +
+                                 $"תאריך: {pubDate}\n\n" +
+                                 $"ניתוח AI:\n{analysis}\n\n" +
                                  $"קישור: {link}";
 
                 await SendTelegramMessage(message);
 
-                if (isCritical)
+                bool shouldEmail = analysis.Contains("🚨")
+                                || analysis.Contains("קנה")
+                                || analysis.Contains("מכור");
+
+                if (shouldEmail)
                 {
-                    SendEmail("IREN Critical Alert: " + title, message);
+                    SendEmail("IREN Alert: " + title, message);
                 }
 
                 File.WriteAllText(LastIdFile, link);
@@ -73,6 +81,55 @@ namespace IrenNotifier
             {
                 Console.WriteLine($"Error: {ex.Message}");
             }
+        }
+
+        static async Task<string> AnalyzeWithGemini(string title, string description)
+        {
+            string prompt = "Analyze this news article about Iris Energy (IREN). " +
+                "Provide a 2-3 sentence summary STRICTLY IN HEBREW. " +
+                "State if the sentiment is positive, negative, or neutral. " +
+                "Finally, give a clear short recommendation in Hebrew: Hold (החזק), Buy (קנה), or Sell (מכור). " +
+                "If the news is extremely critical (e.g., dilution, earnings report, major contract), include a 🚨 emoji at the beginning.\n\n" +
+                $"Title: {title}\nDescription: {description}";
+
+            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GeminiApiKey}";
+
+            var requestBody = new
+            {
+                contents = new[]
+                {
+                    new
+                    {
+                        parts = new[]
+                        {
+                            new { text = prompt }
+                        }
+                    }
+                }
+            };
+
+            using var client = new HttpClient();
+            var json = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync(url, content);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Gemini API error: {response.StatusCode} - {responseBody}");
+                return "ניתוח לא זמין כרגע.";
+            }
+
+            using var doc = JsonDocument.Parse(responseBody);
+            var text = doc.RootElement
+                .GetProperty("candidates")[0]
+                .GetProperty("content")
+                .GetProperty("parts")[0]
+                .GetProperty("text")
+                .GetString();
+
+            return text?.Trim() ?? "לא התקבלה תשובה מהמודל.";
         }
 
         static async Task SendTelegramMessage(string message)
